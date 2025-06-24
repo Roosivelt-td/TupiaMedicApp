@@ -1,9 +1,15 @@
 package com.clinica.citas.dto.request;
 
-public record PacienteRequest(
-        String dni,
-        String nombre,
-        String apellido,
-        String email,
-        String telefono
-) {}
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class PacienteRequest {
+    private String dni;
+    private String nombre;
+    private String apellido;
+    private String telefono;
+    private String email;
+    private String direccion;
+}

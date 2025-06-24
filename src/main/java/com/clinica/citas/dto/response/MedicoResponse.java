@@ -1,10 +1,13 @@
 package com.clinica.citas.dto.response;
 
-public record MedicoResponse(
-        Long id,
-        String nombre,
-        String apellido,
-        String especialidad,
-        String email,
-        String telefono
-) {}
+import lombok.Data;
+
+@Data
+public class MedicoResponse {
+    private Long id;
+    private String nombre;
+    private String apellido;
+    private String especialidad;
+    private String telefono;
+    private String email;
+}

@@ -10,93 +10,103 @@ import com.clinica.citas.repository.MedicoRepository;
 import com.clinica.citas.repository.PacienteRepository;
 import com.clinica.citas.service.CitaService;
 import com.clinica.citas.service.mapper.CitaMapper;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class CitaServiceImpl implements CitaService {
 
-    private final CitaRepository citaRepository;
-    private final MedicoRepository medicoRepository;
-    private final PacienteRepository pacienteRepository;
-    private final CitaMapper citaMapper;
+    @Autowired
+    private CitaRepository citaRepository;
+
+    @Autowired
+    private MedicoRepository medicoRepository;
+
+    @Autowired
+    private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private CitaMapper citaMapper;
 
     @Override
-    public CitaResponse crearCita(CitaRequest citaRequest) {
-        if (existeCitaSolapada(citaRequest.getMedicoId(), citaRequest.getFechaHora())) {
-            throw new RuntimeException("El médico ya tiene una cita programada en ese horario");
-        }
+    public CitaResponse programarCita(CitaRequest request) {
+        // Validar que el paciente existe
+        Paciente paciente = pacienteRepository.findById(request.getPacienteId())
+                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
 
-        Medico medico = medicoRepository.findById(citaRequest.getMedicoId())
+        // Validar que el médico existe
+        Medico medico = medicoRepository.findById(request.getMedicoId())
                 .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
 
-        Paciente paciente = pacienteRepository.findByDni(citaRequest.getPacienteDni())
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+        // Validar disponibilidad del médico
+        if (citaRepository.existsByMedicoIdAndFechaHora(request.getMedicoId(), request.getFechaHora())) {
+            throw new RuntimeException("El médico ya tiene una cita programada en ese horario");
+        }
 
         Cita cita = new Cita();
-        cita.setMedico(medico);
         cita.setPaciente(paciente);
-        cita.setFechaHora(citaRequest.getFechaHora());
-        cita.setEstado("PROGRAMADA");
+        cita.setMedico(medico);
+        cita.setFechaHora(request.getFechaHora());
+        cita.setMotivo(request.getMotivo());
+        cita.setEstado("Programada");
 
-        Cita citaGuardada = citaRepository.save(cita);
-        return citaMapper.toResponse(citaGuardada);
+        cita = citaRepository.save(cita);
+
+        return citaMapper.toCitaResponse(cita);
     }
 
     @Override
-    public boolean existeCitaSolapada(Long medicoId, LocalDateTime fechaHora) {
-        LocalDateTime inicio = fechaHora.minusMinutes(29);
-        LocalDateTime fin = fechaHora.plusMinutes(29);
-        return !citaRepository.findByMedicoIdAndFechaHoraBetween(medicoId, inicio, fin).isEmpty();
+    public List<CitaResponse> obtenerCitasPorPaciente(Long pacienteId) {
+        List<Cita> citas = citaRepository.findByPacienteId(pacienteId);
+        return citaMapper.toListCitaResponse(citas);
     }
 
     @Override
-    public CitaResponse actualizarCita(Long id, CitaRequest citaRequest) {
+    public List<CitaResponse> obtenerCitasPorMedico(Long medicoId) {
+        List<Cita> citas = citaRepository.findByMedicoId(medicoId);
+        return citaMapper.toListCitaResponse(citas);
+    }
+
+    @Override
+    public CitaResponse obtenerCitaPorId(Long id) {
         Cita cita = citaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
-
-        if (existeCitaSolapada(citaRequest.getMedicoId(), citaRequest.getFechaHora())) {
-            throw new RuntimeException("El médico ya tiene una cita programada en ese horario");
-        }
-
-        Medico medico = medicoRepository.findById(citaRequest.getMedicoId())
-                .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
-
-        Paciente paciente = pacienteRepository.findByDni(citaRequest.getPacienteDni())
-                .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
-
-        cita.setMedico(medico);
-        cita.setPaciente(paciente);
-        cita.setFechaHora(citaRequest.getFechaHora());
-
-        Cita citaActualizada = citaRepository.save(cita);
-        return citaMapper.toResponse(citaActualizada);
+        return citaMapper.toCitaResponse(cita);
     }
 
     @Override
     public void cancelarCita(Long id) {
         Cita cita = citaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
-        cita.setEstado("CANCELADA");
+        cita.setEstado("Cancelada");
         citaRepository.save(cita);
     }
 
     @Override
-    public List<CitaResponse> obtenerCitasPorPaciente(String dni) {
-        return citaRepository.findByPacienteDni(dni).stream()
-                .map(citaMapper::toResponse)
-                .collect(Collectors.toList());
-    }
+    public List<CitaResponse> obtenerCitasDisponibles(Long medicoId, LocalDateTime fecha) {
+        // Validar que el médico existe
+        if (!medicoRepository.existsById(medicoId)) {
+            throw new RuntimeException("Médico no encontrado");
+        }
 
-    @Override
-    public List<CitaResponse> obtenerCitasPorMedico(Long medicoId) {
-        return citaRepository.findByMedicoId(medicoId).stream()
-                .map(citaMapper::toResponse)
-                .collect(Collectors.toList());
+        // Convertir la fecha a inicio y fin del día
+        LocalDateTime inicioDia = fecha.with(LocalTime.MIN);
+        LocalDateTime finDia = fecha.with(LocalTime.MAX);
+
+        // Obtener citas programadas para ese médico en ese día
+        List<Cita> citasProgramadas = citaRepository.findByMedicoIdAndFechaHoraBetween(
+                medicoId, inicioDia, finDia);
+
+        // Aquí podrías implementar lógica para determinar los horarios disponibles
+        // basado en las citas ya programadas y el horario laboral del médico
+        // Este es un ejemplo simplificado que devuelve las citas programadas
+        // (en un caso real, deberías calcular los espacios disponibles)
+
+        return citaMapper.toListCitaResponse(citasProgramadas);
     }
 }

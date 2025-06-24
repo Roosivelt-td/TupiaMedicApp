@@ -5,10 +5,10 @@ import com.clinica.citas.dto.response.MedicoResponse;
 import java.util.List;
 
 public interface MedicoService {
-    MedicoResponse crearMedico(MedicoRequest medicoRequest);
-    List<MedicoResponse> obtenerTodosLosMedicos();
+    MedicoResponse crearMedico(MedicoRequest request);
     MedicoResponse obtenerMedicoPorId(Long id);
+    List<MedicoResponse> obtenerTodosLosMedicos();
     List<MedicoResponse> obtenerMedicosPorEspecialidad(String especialidad);
-    MedicoResponse actualizarMedico(Long id, MedicoRequest medicoRequest);
+    void actualizarMedico(Long id, MedicoRequest request);
     void eliminarMedico(Long id);
 }

@@ -5,10 +5,11 @@ import com.clinica.citas.dto.response.PacienteResponse;
 import java.util.List;
 
 public interface PacienteService {
-    PacienteResponse crearPaciente(PacienteRequest pacienteRequest);
-    List<PacienteResponse> obtenerTodosLosPacientes();
+    PacienteResponse crearPaciente(PacienteRequest request);
     PacienteResponse obtenerPacientePorId(Long id);
     PacienteResponse obtenerPacientePorDni(String dni);
-    PacienteResponse actualizarPaciente(Long id, PacienteRequest pacienteRequest);
+    List<PacienteResponse> obtenerTodosLosPacientes();
+    List<PacienteResponse> buscarPacientesPorNombre(String nombre);
+    void actualizarPaciente(Long id, PacienteRequest request);
     void eliminarPaciente(Long id);
 }

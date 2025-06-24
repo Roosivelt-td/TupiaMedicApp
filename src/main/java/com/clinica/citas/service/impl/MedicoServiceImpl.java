@@ -6,66 +6,63 @@ import com.clinica.citas.model.Medico;
 import com.clinica.citas.repository.MedicoRepository;
 import com.clinica.citas.service.MedicoService;
 import com.clinica.citas.service.mapper.MedicoMapper;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class MedicoServiceImpl implements MedicoService {
 
-    private final MedicoRepository medicoRepository;
-    private final MedicoMapper medicoMapper;
+    @Autowired
+    private MedicoRepository medicoRepository;
+
+    @Autowired
+    private MedicoMapper medicoMapper;
 
     @Override
-    public MedicoResponse crearMedico(MedicoRequest medicoRequest) {
+    public MedicoResponse crearMedico(MedicoRequest request) {
         Medico medico = new Medico();
-        medico.setNombre(medicoRequest.nombre());
-        medico.setApellido(medicoRequest.apellido());
-        medico.setEspecialidad(medicoRequest.especialidad());
-        medico.setEmail(medicoRequest.email());
-        medico.setTelefono(medicoRequest.telefono());
+        medico.setNombre(request.getNombre());
+        medico.setApellido(request.getApellido());
+        medico.setEspecialidad(request.getEspecialidad());
+        medico.setTelefono(request.getTelefono());
+        medico.setEmail(request.getEmail());
 
-        Medico medicoGuardado = medicoRepository.save(medico);
-        return medicoMapper.toResponse(medicoGuardado);
-    }
-
-    @Override
-    public List<MedicoResponse> obtenerTodosLosMedicos() {
-        return medicoRepository.findAll().stream()
-                .map(medicoMapper::toResponse)
-                .collect(Collectors.toList());
+        medico = medicoRepository.save(medico);
+        return medicoMapper.toMedicoResponse(medico);
     }
 
     @Override
     public MedicoResponse obtenerMedicoPorId(Long id) {
         Medico medico = medicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
-        return medicoMapper.toResponse(medico);
+        return medicoMapper.toMedicoResponse(medico);
+    }
+
+    @Override
+    public List<MedicoResponse> obtenerTodosLosMedicos() {
+        List<Medico> medicos = medicoRepository.findAll();
+        return medicoMapper.toListMedicoResponse(medicos);
     }
 
     @Override
     public List<MedicoResponse> obtenerMedicosPorEspecialidad(String especialidad) {
-        return medicoRepository.findByEspecialidad(especialidad).stream()
-                .map(medicoMapper::toResponse)
-                .collect(Collectors.toList());
+        List<Medico> medicos = medicoRepository.findByEspecialidad(especialidad);
+        return medicoMapper.toListMedicoResponse(medicos);
     }
 
     @Override
-    public MedicoResponse actualizarMedico(Long id, MedicoRequest medicoRequest) {
+    public void actualizarMedico(Long id, MedicoRequest request) {
         Medico medico = medicoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Médico no encontrado"));
 
-        medico.setNombre(medicoRequest.nombre());
-        medico.setApellido(medicoRequest.apellido());
-        medico.setEspecialidad(medicoRequest.especialidad());
-        medico.setEmail(medicoRequest.email());
-        medico.setTelefono(medicoRequest.telefono());
+        medico.setNombre(request.getNombre());
+        medico.setApellido(request.getApellido());
+        medico.setEspecialidad(request.getEspecialidad());
+        medico.setTelefono(request.getTelefono());
+        medico.setEmail(request.getEmail());
 
-        Medico medicoActualizado = medicoRepository.save(medico);
-        return medicoMapper.toResponse(medicoActualizado);
+        medicoRepository.save(medico);
     }
 
     @Override

@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CitaService {
-    CitaResponse crearCita(CitaRequest citaRequest);
-    CitaResponse actualizarCita(Long id, CitaRequest citaRequest);
-    void cancelarCita(Long id);
-    List<CitaResponse> obtenerCitasPorPaciente(String dni);
+    CitaResponse programarCita(CitaRequest request);
+    List<CitaResponse> obtenerCitasPorPaciente(Long pacienteId);
     List<CitaResponse> obtenerCitasPorMedico(Long medicoId);
-    boolean existeCitaSolapada(Long medicoId, LocalDateTime fechaHora);
+    CitaResponse obtenerCitaPorId(Long id);
+    void cancelarCita(Long id);
+    List<CitaResponse> obtenerCitasDisponibles(Long medicoId, LocalDateTime fecha);
 }

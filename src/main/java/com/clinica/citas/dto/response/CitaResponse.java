@@ -1,13 +1,17 @@
 package com.clinica.citas.dto.response;
 
+import lombok.Data;
 import java.time.LocalDateTime;
 
-public record CitaResponse(
-        Long id,
-        String pacienteNombre,
-        String pacienteDni,
-        String medicoNombre,
-        String medicoEspecialidad,
-        LocalDateTime fechaHora,
-        String estado
-) {}
+@Data
+public class CitaResponse {
+    private Long id;
+    private Long pacienteId;
+    private String pacienteNombre;
+    private Long medicoId;
+    private String medicoNombre;
+    private String especialidad;
+    private LocalDateTime fechaHora;
+    private String estado;
+    private String motivo;
+}

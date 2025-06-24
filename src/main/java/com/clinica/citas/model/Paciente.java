@@ -2,23 +2,22 @@ package com.clinica.citas.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.util.List;
+import java.util.Set;
 
 @Entity
-@Data
 @Table(name = "pacientes")
+@Data
 public class Paciente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String dni;
     private String nombre;
     private String apellido;
-    private String email;
     private String telefono;
+    private String email;
+    private String direccion;
 
     @OneToMany(mappedBy = "paciente")
-    private List<Cita> citas;
+    private Set<Cita> citas;
 }
